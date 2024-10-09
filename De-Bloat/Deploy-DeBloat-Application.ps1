@@ -58,17 +58,17 @@ Function Get-ScriptVersion(){
     
     param
     (
-        $liveuri
+        $live
     )
-$contentheaderraw = (Invoke-WebRequest -Uri $liveuri -Method Get)
+$contentheaderraw = (Invoke-WebRequest - $live -Method Get)
 $contentheader = $contentheaderraw.Content.Split([Environment]::NewLine)
 $liveversion = (($contentheader | Select-String 'Version:') -replace '[^0-9.]','') | Select-Object -First 1
 $currentversion = ((Get-Content -Path $PSCommandPath | Select-String -Pattern "Version: *") -replace '[^0-9.]','') | Select-Object -First 1
 if ($liveversion -ne $currentversion) {
-write-host "Script has been updated, please download the latest version from $liveuri" -ForegroundColor Red
+write-host "Script has been updated, please download the latest version from $live" -ForegroundColor Red
 }
 }
-Get-ScriptVersion -liveuri "https://raw.githubusercontent.com/andrew-s-taylor/public/main/De-Bloat/Deploy-DeBloat-Application.ps1"
+Get-ScriptVersion -liveuri "https://raw.githubusercontent.com/cloudinfranuvem/De-Bloat/main/De-Bloat/Deploy-DeBloat-Application.ps1"
 ##########################################################################################
 
 $ErrorActionPreference = "Continue"
@@ -1460,7 +1460,7 @@ $appid = "DeBloat"
 
 
 # Find the script
-$appurl = "https://raw.githubusercontent.com/andrew-s-taylor/public/main/De-Bloat/debloat-intune-script.ps1"
+$appurl = "https://raw.githubusercontent.com/cloudinfranuvem/De-Bloat/main/De-Bloat/debloat-intune-script.ps1"
 
 #Set the download location
 $output = $apppath + "\debloat-intune-script.ps1"
