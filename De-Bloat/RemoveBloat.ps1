@@ -844,7 +844,99 @@ if ($version -like "*Windows 10*") {
 #                                           Windows CoPilot                                                #
 #                                                                                                          #
 ############################################################################################################
+$version = Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Caption
+if ($version -like "*Windows 11*") {
+    write-output "Removing Windows Copilot"
+    # Define the registry key and value
+    $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot"
+    $propertyName = "TurnOffWindowsCopilot"
+    $propertyValue = 1
 
+    # Check if the registry key exists
+    if (!(Test-Path $registryPath)) {
+        # If the registry key doesn't exist, create it
+        New-Item -Path $registryPath -Force | Out-Null
+    }
+
+    # Get the property value
+    $currentValue = Get-ItemProperty -Path $registryPath -Name $propertyName -ErrorAction SilentlyContinue
+
+    # Check if the property exists and if its value is different from the desired value
+    if ($null -eq $currentValue -or $currentValue.$propertyName -ne $propertyValue) {
+        # If the property doesn't exist or its value is different, set the property value
+        Set-ItemProperty -Path $registryPath -Name $propertyName -Value $propertyValue
+    }
+
+
+    ##Grab the default user as well
+    $registryPath = "HKEY_USERS\.DEFAULT\Software\Policies\Microsoft\Windows\WindowsCopilot"
+    $propertyName = "TurnOffWindowsCopilot"
+    $propertyValue = 1
+
+    # Check if the registry key exists
+    if (!(Test-Path $registryPath)) {
+        # If the registry key doesn't exist, create it
+        New-Item -Path $registryPath -Force | Out-Null
+    }
+
+    # Get the property value
+    $currentValue = Get-ItemProperty -Path $registryPath -Name $propertyName -ErrorAction SilentlyContinue
+
+    # Check if the property exists and if its value is different from the desired value
+    if ($null -eq $currentValue -or $currentValue.$propertyName -ne $propertyValue) {
+        # If the property doesn't exist or its value is different, set the property value
+        Set-ItemProperty -Path $registryPath -Name $propertyName -Value $propertyValue
+    }
+
+
+    ##Load the default hive from c:\users\Default\NTUSER.dat
+    reg load HKU\temphive "c:\users\default\ntuser.dat"
+    $registryPath = "registry::hku\temphive\Software\Policies\Microsoft\Windows\WindowsCopilot"
+    $propertyName = "TurnOffWindowsCopilot"
+    $propertyValue = 1
+
+    # Check if the registry key exists
+    if (!(Test-Path $registryPath)) {
+        # If the registry key doesn't exist, create it
+        [Microsoft.Win32.RegistryKey]$HKUCoPilot = [Microsoft.Win32.Registry]::Users.CreateSubKey("temphive\Software\Policies\Microsoft\Windows\WindowsCopilot", [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree)
+        $HKUCoPilot.SetValue("TurnOffWindowsCopilot", 0x1, [Microsoft.Win32.RegistryValueKind]::DWord)
+    }
+
+
+
+
+
+    $HKUCoPilot.Flush()
+    $HKUCoPilot.Close()
+    [gc]::Collect()
+    [gc]::WaitForPendingFinalizers()
+    reg unload HKU\temphive
+
+
+    write-output "Removed"
+
+
+    foreach ($sid in $UserSIDs) {
+        $registryPath = "Registry::HKU\$sid\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot"
+        $propertyName = "TurnOffWindowsCopilot"
+        $propertyValue = 1
+
+        # Check if the registry key exists
+        if (!(Test-Path $registryPath)) {
+            # If the registry key doesn't exist, create it
+            New-Item -Path $registryPath -Force | Out-Null
+        }
+
+        # Get the property value
+        $currentValue = Get-ItemProperty -Path $registryPath -Name $propertyName -ErrorAction SilentlyContinue
+
+        # Check if the property exists and if its value is different from the desired value
+        if ($null -eq $currentValue -or $currentValue.$propertyName -ne $propertyValue) {
+            # If the property doesn't exist or its value is different, set the property value
+            Set-ItemProperty -Path $registryPath -Name $propertyName -Value $propertyValue
+        }
+    }
+}
 ############################################################################################################
 #                                              Remove Recall                                               #
 #                                                                                                          #
